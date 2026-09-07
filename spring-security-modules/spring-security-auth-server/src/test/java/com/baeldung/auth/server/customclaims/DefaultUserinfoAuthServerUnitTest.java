@@ -1,6 +1,5 @@
 package com.baeldung.auth.server.customclaims;
 
-import com.baeldung.auth.server.dynamicscopes.DynamicScopesAuthServerApplication;
 import org.jsoup.Jsoup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,9 +25,14 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Integrations tests for the {@link CustomClaimsAuthServerApplication}
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+  webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+    properties = {
+        "customuserinfo.enabled=false"
+    }
+)
 @ActiveProfiles("customclaims")
-class CustomClaimsAuthServerUnitTest {
+class DefaultUserinfoAuthServerUnitTest {
 
     @LocalServerPort
     int port;
@@ -153,12 +157,6 @@ class CustomClaimsAuthServerUnitTest {
         assertEquals(HttpStatus.OK, userInfoResult.getStatus());
         var userInfo = userInfoResult.getResponseBody();
         assertNotNull(userInfo);
-        assertTrue(userInfo.containsKey("sub"));
-        assertTrue(userInfo.containsKey("email"));
-        assertTrue(userInfo.containsKey("name"));
-        assertTrue(userInfo.containsKey("locale"));
-        assertTrue(userInfo.containsKey("account_id"));
-
 
     }
 
