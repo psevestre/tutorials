@@ -31,7 +31,6 @@ import static org.springframework.security.config.Customizer.withDefaults;
 public class AuthServerConfiguration {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(AuthServerConfiguration.class);
 
-
     private final UserInfoService userInfoService;
 
     @Value("${customuserinfo.enabled:true}")
@@ -43,23 +42,25 @@ public class AuthServerConfiguration {
 
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
-    SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource) {
+    SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) {
 
         log.info("Creating authorization sever SecurityFilterChain");
 
         // @formatter:off
-        return http.oauth2AuthorizationServer(as -> {
+        return http.oauth2AuthorizationServer(sas -> {
           http
-            .securityMatcher(as.getEndpointsMatcher())
+            .securityMatcher(sas.getEndpointsMatcher())
             .authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
             .exceptionHandling(exceptions ->
               exceptions.defaultAuthenticationEntryPointFor(new LoginUrlAuthenticationEntryPoint("/login"), createRequestMatcher()));
 
-          if ( enableCustomUserInfo) {
-            as.oidc(oidc -> oidc.userInfoEndpoint(userInfo -> userInfo.userInfoMapper(userInfoMapper())));
+          if ( enableCustomUserInfo ) {
+            sas.oidc(oidc -> oidc
+              .userInfoEndpoint(userInfo -> userInfo
+                .userInfoMapper(userInfoMapper())));
           }
           else {
-              as.oidc(withDefaults());
+            sas.oidc(withDefaults());
           }
         }).build();
         // @formatter:on
@@ -67,6 +68,7 @@ public class AuthServerConfiguration {
 
     private Function<OidcUserInfoAuthenticationContext, OidcUserInfo> userInfoMapper() {
         return context -> {
+
             var auth = context.getAuthentication();
             var userInfo = userInfoService.getUserInfoByUsername(auth.getName());
             return OidcUserInfo.builder()
@@ -75,15 +77,22 @@ public class AuthServerConfiguration {
               .name(userInfo.name())
               .givenName(userInfo.givenName())
               .familyName(userInfo.familyName())
-              .locale(userInfo.locale().toLanguageTag())
+              .locale(userInfo.locale()
+                .toLanguageTag())
               .gender(userInfo.gender())
-              .birthdate(userInfo.birthdate().toString())
-              .zoneinfo(userInfo.zoneId().toString())
+              .birthdate(userInfo.birthdate()
+                .toString())
+              .zoneinfo(userInfo.zoneId()
+                .toString())
               .preferredUsername(userInfo.username())
-              .claim("account_id", userInfo.accountId().toString())
-              .claim("created_at", userInfo.createdAt().toString())
-              .claim("updated_at", userInfo.updatedAt().toString())
-              .claim("account_expires_at", userInfo.accountExpiresAt().toString())
+              .claim("account_id", userInfo.accountId()
+                .toString())
+              .claim("created_at", userInfo.createdAt()
+                .toString())
+              .claim("updated_at", userInfo.updatedAt()
+                .toString())
+              .claim("account_expires_at", userInfo.accountExpiresAt()
+                .toString())
               .build();
         };
     }
@@ -99,24 +108,11 @@ public class AuthServerConfiguration {
         return http.build();
     }
 
-
-    CorsConfigurationSource corsConfigurationSource() {
-        return request -> {
-            var corsConfiguration = new CorsConfiguration();
-            corsConfiguration.setAllowedOrigins(List.of("*"));
-            corsConfiguration.setAllowedMethods(List.of("*"));
-            corsConfiguration.setAllowedHeaders(List.of("*"));
-            return corsConfiguration;
-        };
-    }
-
     private static RequestMatcher createRequestMatcher() {
         MediaTypeRequestMatcher requestMatcher = new MediaTypeRequestMatcher(MediaType.TEXT_HTML);
         requestMatcher.setIgnoredMediaTypes(Set.of(MediaType.ALL));
         return requestMatcher;
     }
-
-
 
 }
 

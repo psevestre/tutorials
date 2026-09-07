@@ -1,5 +1,7 @@
 package com.baeldung.auth.server.customclaims.components;
 
+import org.slf4j.Logger;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
